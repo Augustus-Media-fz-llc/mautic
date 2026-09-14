@@ -144,3 +144,7 @@ tests/**/*.sql
 !/themes/blank-big.png
 
 /translations
+
+# Local deploy state (EFS AP IDs)
+deploy/prod/.state/
+deploy/ecs-task-definition.rendered.json

@@ -1,0 +1,125 @@
+{
+  "family": "mautic-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::200073705180:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::200073705180:role/ecsTaskExecutionRole",
+  "volumes": [
+    {
+      "name": "mautic-config",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-0dc06b4db07666380",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "PLACEHOLDER_ACCESS_POINT_CONFIG",
+          "iam": "DISABLED"
+        }
+      }
+    },
+    {
+      "name": "mautic-logs",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-0dc06b4db07666380",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "PLACEHOLDER_ACCESS_POINT_LOGS",
+          "iam": "DISABLED"
+        }
+      }
+    },
+    {
+      "name": "mautic-media-files",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-0dc06b4db07666380",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "PLACEHOLDER_ACCESS_POINT_MEDIA_FILES",
+          "iam": "DISABLED"
+        }
+      }
+    },
+    {
+      "name": "mautic-media-images",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-0dc06b4db07666380",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "PLACEHOLDER_ACCESS_POINT_MEDIA_IMAGES",
+          "iam": "DISABLED"
+        }
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "mautic",
+      "image": "200073705180.dkr.ecr.ap-south-1.amazonaws.com/augustus/mautic:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "mautic-config",
+          "containerPath": "/var/www/html/config",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "mautic-logs",
+          "containerPath": "/var/www/html/var/logs",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "mautic-media-files",
+          "containerPath": "/var/www/html/docroot/media/files",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "mautic-media-images",
+          "containerPath": "/var/www/html/docroot/media/images",
+          "readOnly": false
+        }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://127.0.0.1/ || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 5,
+        "startPeriod": 180
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mautic",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        { "name": "DOCKER_MAUTIC_ROLE", "value": "mautic_web" },
+        { "name": "DOCKER_MAUTIC_LOAD_TEST_DATA", "value": "false" },
+        { "name": "MAUTIC_DB_HOST", "value": "smashi-db-mumbai.ceqvaosxijom.ap-south-1.rds.amazonaws.com" },
+        { "name": "MAUTIC_DB_PORT", "value": "3306" },
+        { "name": "MAUTIC_DB_DATABASE", "value": "mautic" },
+        { "name": "MAUTIC_URL", "value": "https://mautic.augustusmedia.com" },
+        { "name": "PHP_INI_VALUE_DATE_TIMEZONE", "value": "Africa/Cairo" },
+        { "name": "PHP_INI_VALUE_MEMORY_LIMIT", "value": "512M" }
+      ],
+      "secrets": [
+        {
+          "name": "MAUTIC_DB_USER",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:200073705180:secret:/mautic/MAUTIC_DB_USER-GbQFkw"
+        },
+        {
+          "name": "MAUTIC_DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:200073705180:secret:/mautic/MAUTIC_DB_PASSWORD-9ujd4o"
+        }
+      ]
+    }
+  ]
+}
